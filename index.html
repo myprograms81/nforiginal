@@ -183,7 +183,7 @@
     <h2>🏋️ Exercise Tracker</h2>
     <div id="clock" class="clock">--:--:--</div>
   </div>
-  <button id="abandon-btn" onclick="abandonStreak()">Abandon Tracker</button>
+  <button id="abandon-btn" onclick="toggleAbandonment()">Abandon Tracker</button>
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="tab-btn" onclick="switchTab('challenges')">Challenges</button>
@@ -293,39 +293,44 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
-    function abandonStreak() {
-      // 1. Confirm the user actually wants to stop tracking
-      const confirmAbandon = confirm("Are you sure you want to abandon this tracker? Your current streak will stop updating.");
+    function toggleAbandonment() {
+      const isAbandoned = localStorage.getItem('isAbandoned') === 'true';
 
-      if (confirmAbandon) {
-        // 2. Clear any running intervals/timers if you have them
-        if (window.streakInterval) {
-          clearInterval(window.streakInterval);
+      if (!isAbandoned) {
+        // ABANDON
+        if (confirm("Are you sure you want to abandon this tracker? Streaks will stop updating.")) {
+          localStorage.setItem('isAbandoned', 'true');
+          alert("Tracker abandoned.");
         }
+      } else {
+        // UNABANDON
+        if (confirm("Do you want to resume tracking your streak?")) {
+          localStorage.setItem('isAbandoned', 'false');
+          alert("Tracker resumed!");
+        }
+      }
 
-        // 3. Update status in localStorage so it stays abandoned on refresh
-        localStorage.setItem('isAbandoned', 'true');
+      // Refresh UI state
+      checkAbandonStatus();
+    }
 
-        // 4. Update the UI to reflect the abandoned state
-        document.getElementById('status-display').innerText = "Tracker Abandoned";
-        document.getElementById('abandon-btn').disabled = true;
-        document.getElementById('abandon-btn').innerText = "Abandoned";
+    function checkAbandonStatus() {
+      const isAbandoned = localStorage.getItem('isAbandoned') === 'true';
+      const abandonBtn = document.getElementById('abandon-btn');
+      const statusDisplay = document.getElementById('status-display');
 
-        alert("Streak tracking has been stopped.");
+      if (isAbandoned) {
+        if (statusDisplay) statusDisplay.innerText = "Tracker Abandoned";
+        if (abandonBtn) abandonBtn.innerText = "Resume Tracking";
+      } else {
+        if (statusDisplay) statusDisplay.innerText = "Tracking Active";
+        if (abandonBtn) abandonBtn.innerText = "Abandon Tracker";
       }
     }
 
-    // Check if tracker was previously abandoned on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      if (localStorage.getItem('isAbandoned') === 'true') {
-        document.getElementById('status-display').innerText = "Tracker Abandoned";
-        const abandonBtn = document.getElementById('abandon-btn');
-        if (abandonBtn) {
-          abandonBtn.disabled = true;
-          abandonBtn.innerText = "Abandoned";
-        }
-      }
-    });
+    // Run status check when page loads
+    window.addEventListener('DOMContentLoaded', checkAbandonStatus);
+
     function updateStreak() {
       // Don't update if abandoned
       if (localStorage.getItem('isAbandoned') === 'true') {
