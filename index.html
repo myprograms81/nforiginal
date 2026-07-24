@@ -183,7 +183,7 @@
     <h2>🏋️ Exercise Tracker</h2>
     <div id="clock" class="clock">--:--:--</div>
   </div>
-
+  <button id="abandon-btn" onclick="abandonStreak()">Abandon Tracker</button>
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="tab-btn" onclick="switchTab('challenges')">Challenges</button>
@@ -293,6 +293,47 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
+    function abandonStreak() {
+      // 1. Confirm the user actually wants to stop tracking
+      const confirmAbandon = confirm("Are you sure you want to abandon this tracker? Your current streak will stop updating.");
+
+      if (confirmAbandon) {
+        // 2. Clear any running intervals/timers if you have them
+        if (window.streakInterval) {
+          clearInterval(window.streakInterval);
+        }
+
+        // 3. Update status in localStorage so it stays abandoned on refresh
+        localStorage.setItem('isAbandoned', 'true');
+
+        // 4. Update the UI to reflect the abandoned state
+        document.getElementById('status-display').innerText = "Tracker Abandoned";
+        document.getElementById('abandon-btn').disabled = true;
+        document.getElementById('abandon-btn').innerText = "Abandoned";
+
+        alert("Streak tracking has been stopped.");
+      }
+    }
+
+    // Check if tracker was previously abandoned on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('isAbandoned') === 'true') {
+        document.getElementById('status-display').innerText = "Tracker Abandoned";
+        const abandonBtn = document.getElementById('abandon-btn');
+        if (abandonBtn) {
+          abandonBtn.disabled = true;
+          abandonBtn.innerText = "Abandoned";
+        }
+      }
+    });
+    function updateStreak() {
+      // Don't update if abandoned
+      if (localStorage.getItem('isAbandoned') === 'true') {
+        return;
+      }
+
+      // ... rest of your normal streak tracking logic
+    }
     // 1. Clock
     function updateClock() {
       document.getElementById('clock').innerText = new Date().toLocaleString();
