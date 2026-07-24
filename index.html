@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 40px;
+      margin: 0;
+    }
+
+    #clock {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    #count {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="clock"></div>
+  <div id="count">0</div>
+  <button id="btn">Click Me</button>
+
+  <!-- Firebase Web SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <script>
+    // 1. Live Clock
+    function updateClock() {
+      document.getElementById('clock').innerText = new Date().toLocaleString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 2. Firebase Configuration (Paste your actual Firebase config here)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD0jiurKbHgTXQ2vBnsjc1MiurDCVFQay8",
+      authDomain: "nforiginal.firebaseapp.com",
+      databaseURL: "https://nforiginal-default-rtdb.firebaseio.com",
+      projectId: "nforiginal",
+      storageBucket: "nforiginal.firebasestorage.app",
+      messagingSenderId: "545921318685",
+      appId: "1:545921318685:web:8da4c0e9ac57a97947ebf4",
+      measurementId: "G-HDMMPV70WN"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const countRef = db.ref('globalCount');
+
+    let currentCount = 0;
+    const countDisplay = document.getElementById('count');
+
+    // 3. Listen for changes from ANY device in real-time
+    countRef.on('value', (snapshot) => {
+      currentCount = snapshot.val() || 0;
+      countDisplay.innerText = currentCount;
+    });
+
+    // 4. Update the cloud when button is pressed
+    document.getElementById('btn').addEventListener('click', () => {
+      countRef.set(currentCount + 1);
+    });
+  </script>
+</body>
+
+</html>
