@@ -1,54 +1,314 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Exercise Tracker</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+      color: #333;
     }
 
-    #clock {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 12px;
-      color: #555;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
     }
 
-    #count {
-      font-size: 48px;
-      margin: 20px 0;
+    .clock {
+      font-size: 14px;
+      color: #666;
+      font-weight: 600;
     }
 
-    button {
-      font-size: 18px;
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
       padding: 10px 20px;
+      border: none;
+      background: #e0e0e0;
+      border-radius: 6px;
       cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active {
+      background: #007bff;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .stat-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #007bff;
+    }
+
+    .stat-title {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .fail-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.2s;
+    }
+
+    .fail-btn:hover {
+      background: #c82333;
+    }
+
+    .editable-input {
+      width: 80px;
+      font-size: 18px;
+      padding: 2px 5px;
+      font-weight: bold;
+    }
+
+    .strikethrough {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    /* Challenges */
+    .challenge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .challenge-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .challenge-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .challenge-btn:hover {
+      background: #218838;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f1f1;
     }
   </style>
 </head>
 
 <body>
-  <div id="clock"></div>
-  <div id="count">0</div>
-  <button id="btn">Click Me</button>
 
-  <!-- Firebase Web SDK -->
+  <div class="header">
+    <h2>🏋️ Exercise Tracker</h2>
+    <div id="clock" class="clock">--:--:--</div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('challenges')">Challenges</button>
+    <button class="tab-btn" onclick="switchTab('stats')">CSV Stats Data</button>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div id="dashboard" class="tab-content active">
+    <div class="card">
+      <button id="failBtn" class="fail-btn">⚠️ I Missed Exercise Today (Record Failure)</button>
+      <p style="text-align: center; font-size: 13px; color: #666; margin-top: 8px;">
+        Last Failure Recorded: <span id="lastDid" style="font-weight: bold;">Never</span>
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="stat-box">
+        <div class="stat-title">Current Streak (Days)</div>
+        <div id="streakVal" class="stat-value">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">High Score (Days)</div>
+        <div>
+          <input type="number" id="highScoreInput" class="editable-input" value="0"
+            onchange="updateHighScore(this.value)">
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Total Points</div>
+        <div>
+          <input type="number" id="pointsInput" class="editable-input" value="0" onchange="updatePoints(this.value)">
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Improvement Streak</div>
+        <div id="impStreakVal" class="stat-value">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Bonus Points</div>
+        <div id="bonusVal" class="stat-value">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Exceptions Remaining</div>
+        <div id="exceptionsVal" class="stat-value">4 / 4</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h3>Recent 5 Failures (Scores & Exceptions)</h3>
+      <p style="font-size: 13px; color: #666;">Shows score before failure. Strikethrough means a 75%+ exception was
+        applied.</p>
+      <div id="recentFailuresList" style="font-size: 18px; font-weight: bold; margin-top: 10px;">None</div>
+    </div>
+  </div>
+
+  <!-- CHALLENGES TAB -->
+  <div id="challenges" class="tab-content">
+    <div class="card">
+      <h3>Permanent & Reusable Challenges</h3>
+      <p style="font-size: 13px; color: #666;">Clicking a challenge adds its assigned points directly to your total
+        points score.</p>
+
+      <div class="challenge-list">
+        <div class="challenge-item">
+          <span><strong>100 Pushups in a Day</strong> (+50 pts)</span>
+          <button class="challenge-btn" onclick="completeChallenge(50)">Complete (+50)</button>
+        </div>
+        <div class="challenge-item">
+          <span><strong>5KM Run</strong> (+100 pts)</span>
+          <button class="challenge-btn" onclick="completeChallenge(100)">Complete (+100)</button>
+        </div>
+        <div class="challenge-item">
+          <span><strong>7-Day Consistent Streak</strong> (+150 pts)</span>
+          <button class="challenge-btn" onclick="completeChallenge(150)">Complete (+150)</button>
+        </div>
+        <div class="challenge-item">
+          <span><strong>Cold Shower After Workout</strong> (+25 pts)</span>
+          <button class="challenge-btn" onclick="completeChallenge(25)">Complete (+25)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSV STATS DATA TAB -->
+  <div id="stats" class="tab-content">
+    <div class="card">
+      <h3>Historical CSV Dataset</h3>
+      <div style="overflow-x: auto;">
+        <table id="csvTable">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Times Did</th>
+              <th>Comments / Streak Info</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- CSV rows parsed dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
-    // 1. Live Clock
+    // 1. Clock
     function updateClock() {
       document.getElementById('clock').innerText = new Date().toLocaleString();
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // 2. Firebase Configuration (Paste your actual Firebase config here)
+    // 2. Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // 3. Firebase Setup (Replace with your actual keys)
     const firebaseConfig = {
       apiKey: "AIzaSyD8btKXYjbXWqVGM6N-93KZ5pXyMBgJaKs",
       authDomain: "nforiginal-744b9.firebaseapp.com",
@@ -62,20 +322,164 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const countRef = db.ref('globalCount');
+    const trackerRef = db.ref('exerciseTracker');
 
-    let currentCount = 0;
-    const countDisplay = document.getElementById('count');
+    // Default App State Structure
+    let state = {
+      currentStreak: 0,
+      highScore: 70,
+      points: 0,
+      improvementStreak: 0,
+      bonusPoints: 0,
+      exceptionsRemaining: 4,
+      lastDid: "Never",
+      recentFailures: [] // Array of objects: { score: number, exceptionGiven: boolean }
+    };
 
-    // 3. Listen for changes from ANY device in real-time
-    countRef.on('value', (snapshot) => {
-      currentCount = snapshot.val() || 0;
-      countDisplay.innerText = currentCount;
+    // Sync from Firebase
+    trackerRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        state = { ...state, ...data };
+        if (!state.recentFailures) state.recentFailures = [];
+        renderUI();
+      }
     });
 
-    // 4. Update the cloud when button is pressed
-    document.getElementById('btn').addEventListener('click', () => {
-      countRef.set(currentCount + 1);
+    function saveState() {
+      trackerRef.set(state);
+    }
+
+    // Render UI State
+    function renderUI() {
+      document.getElementById('streakVal').innerText = state.currentStreak;
+      document.getElementById('highScoreInput').value = state.highScore;
+      document.getElementById('pointsInput').value = state.points;
+      document.getElementById('impStreakVal').innerText = state.improvementStreak;
+      document.getElementById('bonusVal').innerText = state.bonusPoints;
+      document.getElementById('exceptionsVal').innerText = `${state.exceptionsRemaining} / 4`;
+      document.getElementById('lastDid').innerText = state.lastDid;
+
+      // Render recent 5 failures
+      const failContainer = document.getElementById('recentFailuresList');
+      if (state.recentFailures.length === 0) {
+        failContainer.innerHTML = 'None';
+      } else {
+        failContainer.innerHTML = state.recentFailures.map(f => {
+          return f.exceptionGiven
+            ? `<span class="strikethrough">${f.score}</span>`
+            : `<span>${f.score}</span>`;
+        }).join(', ');
+      }
+    }
+
+    // 4. Failure Logic Engine
+    document.getElementById('failBtn').addEventListener('click', () => {
+      const finishedScore = state.currentStreak;
+      state.lastDid = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString();
+
+      let lastNonExceptionScore = 0;
+      for (let i = state.recentFailures.length - 1; i >= 0; i--) {
+        if (!state.recentFailures[i].exceptionGiven) {
+          lastNonExceptionScore = state.recentFailures[i].score;
+          break;
+        }
+      }
+
+      let appliedException = false;
+
+      // Exception Check (>= 75% of previous non-strikethrough score & exceptions available)
+      if (lastNonExceptionScore > 0 && finishedScore >= (0.75 * lastNonExceptionScore) && state.exceptionsRemaining > 0) {
+        appliedException = true;
+        state.exceptionsRemaining--;
+      } else {
+        // Improvement & Exception logic reset
+        if (lastNonExceptionScore > 0 && finishedScore > lastNonExceptionScore) {
+          state.improvementStreak++;
+
+          // Bonus calculation (Multiplicative Factor)
+          const multFactor = finishedScore / lastNonExceptionScore;
+          state.bonusPoints += Math.floor(multFactor);
+        } else {
+          // Streak broken completely
+          state.improvementStreak = 0;
+          state.bonusPoints = 0;
+          state.exceptionsRemaining = 4; // Reset exceptions after loss
+        }
+      }
+
+      // Record failure log
+      state.recentFailures.push({ score: finishedScore, exceptionGiven: appliedException });
+      if (state.recentFailures.length > 5) {
+        state.recentFailures.shift(); // Keep only last 5
+      }
+
+      // High Score update check
+      if (finishedScore > state.highScore) {
+        state.highScore = finishedScore;
+      }
+
+      // Reset streak
+      state.currentStreak = 0;
+      saveState();
+    });
+
+    // Editable Inputs
+    function updateHighScore(val) {
+      state.highScore = parseInt(val) || 0;
+      saveState();
+    }
+    function updatePoints(val) {
+      state.points = parseInt(val) || 0;
+      saveState();
+    }
+
+    // Challenges
+    function completeChallenge(pts) {
+      state.points += pts;
+      saveState();
+      alert(`Challenge Completed! +${pts} Points Added.`);
+    }
+
+    // 5. Hardcoded CSV Data Table Integration
+    const csvData = [
+      { month: "April 1, 2020", times: 0, comments: "Started" },
+      { month: "May 1, 2020", times: 11, comments: "" },
+      { month: "June 1, 2020", times: 2, comments: "ramzn (3+ weeks streak!)" },
+      { month: "July 1, 2020", times: 6, comments: "" },
+      { month: "August 1, 2020", times: 10, comments: "" },
+      { month: "September 1, 2020", times: 8, comments: "" },
+      { month: "October 1, 2020", times: 12, comments: "" },
+      { month: "November 1, 2020", times: 10, comments: "" },
+      { month: "December 1, 2020", times: 12, comments: "" },
+      { month: "January 1, 2021", times: 13, comments: "" },
+      { month: "February 1, 2021", times: 6, comments: "" },
+      { month: "March 1, 2021", times: 12, comments: "" },
+      { month: "April 1, 2021", times: 12, comments: "" },
+      { month: "May 1, 2021", times: 10, comments: "ramzn" },
+      { month: "June 1, 2021", times: 10, comments: "ramzn" },
+      { month: "July 1, 2021", times: 14, comments: "" },
+      { month: "August 1, 2021", times: 9, comments: "" },
+      { month: "September 1, 2021", times: 12, comments: "" },
+      { month: "October 1, 2021", times: 6, comments: "34D streak!" },
+      { month: "November 1, 2021", times: 3, comments: "34D streak! (continues)" },
+      { month: "January 1, 2024", times: 0, comments: "New sequence dec 1st, 2023" },
+      { month: "February 1, 2024", times: 0, comments: "" },
+      { month: "March 1, 2024", times: 1, comments: "70ish days streak" },
+      { month: "April 1, 2024", times: 9, comments: "ramzn" },
+      { month: "May 1, 2024", times: 9, comments: "" },
+      { month: "June 1, 2024", times: 9, comments: "" },
+      { month: "July 1, 2024", times: 6, comments: "" },
+      { month: "August 1, 2024", times: 11, comments: "" },
+      { month: "September 1, 2024", times: 7, comments: "" },
+      { month: "October 1, 2024", times: 15, comments: "Worst month" }
+    ];
+
+    const tableBody = document.querySelector("#csvTable tbody");
+    csvData.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.month}</td><td>${row.times}</td><td>${row.comments}</td>`;
+      tableBody.appendChild(tr);
     });
   </script>
 </body>
